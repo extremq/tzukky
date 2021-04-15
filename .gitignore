@@ -4,3 +4,5 @@ pyvenv.cfg
 Include/
 Lib/
 Scripts/
+src/libcairo-2.dll
+share/
