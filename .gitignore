@@ -6,3 +6,4 @@ Lib/
 Scripts/
 src/libcairo-2.dll
 share/
+__pycache__/
