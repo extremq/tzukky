@@ -25,6 +25,7 @@ class discord_client(discord.Client):
         self.busy = value
 
     async def on_ready(self):
+        await self.processRestarting()
         await self.change_presence(activity=discord.Game(name="Transformice (prefix ~)"))
         await self.get_channel(env.channels['debug']).send("Ready.")
         print("Connected.")
@@ -153,6 +154,9 @@ class discord_client(discord.Client):
         elif helpers.check_command(cmd, author_access, 'unbusy'):
             self.set_busy_status(False)
             return
+        elif helpers.check_command(cmd, author_access, 'restart'):
+            await self.restart()
+            return
         """END DB COMMANDS"""
 
         """BEGIN TFM-BOT COMMANDS"""
@@ -280,3 +284,36 @@ class discord_client(discord.Client):
                     return await resp.read()
         except Exception:
             return None
+
+    async def restart(self):
+        self.set_busy_status(True)
+        # The bot runs in a heroku dyno, we need to restart it.
+        await self.get_channel(env.channels['debug']).send("Attempting to restart!")
+        async with aiohttp.ClientSession() as session:
+            await session.delete(
+                "https://api.heroku.com/apps/tzukky/dynos/bot",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/vnd.heroku+json; version=3",
+                    "Authorization": "Bearer " + env.heroku_api
+                }
+            )
+
+    async def processRestarting(self):
+        while True:
+            await asyncio.sleep(7200)
+            self.set_busy_status(True)
+            await tfm_client.restart(self=self.tfm_bot)
+            self.set_busy_status(False)
+
+    async def on_connection_error(self, conn):
+        if conn.name == "main":
+            self.set_busy_status(True)
+            await tfm_client.restart(self=self.tfm_bot)
+            self.set_busy_status(False)
+        elif conn.name == "bulle":
+            self.set_busy_status(True)
+            await tfm_client.joinRoom(self=self.tfm_bot, room_name="1")
+            await asyncio.sleep(3.0)
+            await tfm_client.joinRoom(self=self.tfm_bot, room_name="@#shobi")
+            self.set_busy_status(False)
