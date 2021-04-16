@@ -1,3 +1,5 @@
+import math
+
 import aiohttp
 import discord
 
@@ -55,7 +57,7 @@ async def request_tribe_members(param, get):
 
 async def request_player_search(param):
     async with aiohttp.ClientSession() as session:
-        async with session.get(env.cfm_site + "players?search={}".format(param)) as resp:
+        async with session.get(env.cfm_site + "players?search={}&limit=90".format(param)) as resp:
             result = await resp.json()
     if resp.status == 200:
         return result
@@ -63,30 +65,47 @@ async def request_player_search(param):
         return
 
 
-def generate_search_result(search_result):
-    member_list_1 = ""
-    member_list_2 = ""
+async def request_tribe_search(param):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(env.cfm_site + "tribes?search={}&limit=90".format(param)) as resp:
+            result = await resp.json()
+    if resp.status == 200:
+        return result
+    else:
+        return
+
+
+def generate_search_result(search_result, _type):
+    if _type == "profile":
+        url = "https://atelier801.com/profile?pr={}"
+    else:
+        url = "https://atelier801.com/tribe?tr={}"
+
+    search_list = ['', '', '', '', '', '']
+
     count = 0
-    for member in search_result:
+    column = math.ceil(len(search_result) / len(search_list))
+    for result in search_result:
+        search_list[count // column] += '[{}]({})\n'.format(" ".join(result['name'].splitlines()), url.format(result['id']))
         count += 1
-        if count % 2 == 1:
-            member_list_1 += '`' + member['name'] + '`\n'
-        else:
-            member_list_2 += '`' + member['name'] + '`\n'
-    member_list_1 = member_list_1[:-1]
-    member_list_2 = member_list_2[:-1]
-    embed = discord.Embed(title="Search result", description="Showing the first 50 results.")
-    embed.add_field(name="Column 1", value=member_list_1, inline=True)
-    embed.add_field(name="Column 2", value=member_list_2, inline=True)
+
+    embed = discord.Embed(title="Search result", description="Showing the first {} {}(s).".format(len(search_result), _type))
+
+    for i in range(len(search_list)):
+        if search_list[i] != '':
+            embed.add_field(name="Column {}".format(i + 1), value=search_list[i], inline=True)
     return embed
 
 
 def generate_tribe(tribe, tribe_members):
+    url = "https://atelier801.com/profile?pr={}"
+
     shaman = tribe['stats']['total']['shaman']
     defilante = tribe['stats']['total']['defilante']
     survivor = tribe['stats']['total']['survivor']
     racing = tribe['stats']['total']['racing']
     normal = tribe['stats']['total']['normal']
+
     embed = discord.Embed(title=tribe['name'], url="https://atelier801.com/tribe?tr={}".format(tribe['id']))
     embed.set_thumbnail(url="http://logostribu.atelier801.com/{}/{}.jpg".format(tribe['id'] % 10000, tribe['id']))
     embed.add_field(name="ID", value=str(tribe['id']), inline=True)
@@ -100,24 +119,29 @@ def generate_tribe(tribe, tribe_members):
     embed.add_field(name="Racing", value="{} / {} / {} / {}".format(racing['rounds'], racing['finished'], racing['first'], racing['podium']), inline=True)
     embed.add_field(name="Survior", value="{} / {} / {} / {}".format(survivor['rounds'], survivor['killed'], survivor['shaman'], survivor['survivor']), inline=True)
     embed.add_field(name="Members", value=str(tribe['members']), inline=False)
+
     member_list = ""
     count = 0
     for member in tribe_members:
         count += 1
-        if count > 25:
+        if count > 15:
             break
-        member_list += '`' + member['name'] + '`, '
+        member_list += '[{}]({}), '.format(member['name'], url.format(member['id']))
     member_list = member_list[:-2]
-    embed.add_field(name="Member list (25 max)", value=member_list, inline=False)
+
+    embed.add_field(name="Member list (15 max)", value=member_list, inline=False)
     return embed
 
 
 def generate_profile(profile):
+    tribe_url = "https://atelier801.com/tribe?tr={}"
+    profile_url = "https://atelier801.com/profile?pr={}"
     sham = profile['stats']['shaman']
     racing = profile['stats']['racing']
     normal = profile['stats']['normal']
     survivor = profile['stats']['survivor']
     defilante = profile['stats']['defilante']
+
     embed = discord.Embed(title=profile['name'], url="https://atelier801.com/profile?pr=" + str(profile['id']))
     embed.set_thumbnail(url="http://avatars.atelier801.com/{}/{}.jpg".format(profile['id'] % 10000, profile['id']))
     embed.add_field(name="ID", value=str(profile['id']), inline=True)
@@ -126,10 +150,12 @@ def generate_profile(profile):
     else:
         embed.add_field(name="Role", value="None.", inline=True)
     if profile['tribe']:
-        embed.add_field(name="Tribe", value=profile['tribe']['name'], inline=True)
+        embed.add_field(name="Tribe", value="[{}]({})".format(" ".join(profile['tribe']['name'].splitlines()),
+                                                              tribe_url.format(profile['tribe']['id'])), inline=True)
     else:
         embed.add_field(name="Tribe", value="None.", inline=True)
-    embed.add_field(name="Saves", value="{} / {} / {}".format(sham['saves_normal'], sham['saves_hard'], sham['saves_divine']), inline=True)
+    embed.add_field(name="Saves", value="{} / {} / {}".format(sham['saves_normal'], sham['saves_hard'],
+                                                              sham['saves_divine']), inline=True)
     embed.add_field(name="Shaman cheese", value=str(sham['cheese']), inline=True)
     embed.add_field(name="Rounds", value=str(normal['rounds']), inline=True)
     embed.add_field(name="Experience", value=str(sham['experience']), inline=True)
@@ -138,7 +164,8 @@ def generate_profile(profile):
     embed.add_field(name="Firsts", value=str(normal['first']), inline=True)
     embed.add_field(name="Bootcamp", value=str(normal['bootcamp']), inline=True)
     if profile['soulmate']:
-        embed.add_field(name="Soulmate", value=profile['soulmate']['name'], inline=True)
+        embed.add_field(name="Soulmate", value="[{}]({})".format(profile['soulmate']['name'],
+                                                                 profile_url.format(profile['soulmate']['id'])), inline=True)
     else:
         embed.add_field(name="Soulmate", value="None.", inline=True)
     embed.add_field(name="Survivor", value="{} / {} / {} / {}".format(survivor['rounds'], survivor['killed'], survivor['shaman'], survivor['survivor']), inline=True)
@@ -172,5 +199,5 @@ def formula(n):
     return 14250 + (15 * (n - 59) * (n + 60)) / 2
 
 
-def check_command(cmd, commands, author_access, name):
-    return cmd == commands[name]['name'] and commands[name]['access'] & author_access
+def check_command(cmd, author_access, name):
+    return cmd == env.commands[name]['name'] and env.commands[name]['access'] & author_access
