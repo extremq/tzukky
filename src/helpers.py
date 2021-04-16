@@ -57,7 +57,7 @@ async def request_tribe_members(param, get):
 
 async def request_player_search(param):
     async with aiohttp.ClientSession() as session:
-        async with session.get(env.cfm_site + "players?search={}&limit=90".format(param)) as resp:
+        async with session.get(env.cfm_site + "players?search={}&limit=60".format(param)) as resp:
             result = await resp.json()
     if resp.status == 200:
         return result
@@ -67,7 +67,7 @@ async def request_player_search(param):
 
 async def request_tribe_search(param):
     async with aiohttp.ClientSession() as session:
-        async with session.get(env.cfm_site + "tribes?search={}&limit=90".format(param)) as resp:
+        async with session.get(env.cfm_site + "tribes?search={}&limit=60".format(param)) as resp:
             result = await resp.json()
     if resp.status == 200:
         return result
@@ -181,6 +181,35 @@ def generate_help(author_access):
         if author_access & env.commands[key]['access']:
             embed.add_field(name=key, value=env.commands[key]['desc'], inline=True)
     return embed
+
+
+def generate_roomlist(roomlist, gamemode, commu):
+    embed = discord.Embed(title=f"{capitalize_name(gamemode)} rooms in `{commu}`")
+    for room in roomlist.rooms:
+        if commu != "int" and room.name[0] == "*":
+            continue
+        playerword = "players"
+        if room.player_count == 1:
+            playerword = "player"
+        embed.add_field(name=room.name, value=str(room.player_count) + " " + playerword, inline=True)
+    return embed
+
+
+def generate_mod_list(msg):
+    embed = discord.Embed(title="Online moderators", description=msg)
+    return embed
+
+
+def generate_mapcrew_list(msg):
+    embed = discord.Embed(title="Online mapcrews", description=msg)
+    return embed
+
+
+def capitalize_name(name):
+    if name[0] == '+':
+        return '+' + name[1].upper() + name[2:].lower()
+    else:
+        return name[0].upper() + name[1:].lower()
 
 
 def level(exp):
