@@ -141,6 +141,7 @@ class discord_client(discord.Client):
                 await msg.reply("Provide a name.")
                 return
 
+            print(args[0])
             search_result = await helpers.request_tribe_search(args[0])
             if search_result is None:
                 await msg.reply("Failed searching.")
