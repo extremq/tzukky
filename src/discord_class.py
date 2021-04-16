@@ -1,11 +1,14 @@
+import json
+
+import aiohttp
 import discord
 import asyncio
 import io
 import helpers
 
 from tfm_class import tfm_client
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPM
+# from svglib.svglib import svg2rlg
+# from reportlab.graphics import renderPM
 
 from env_class import env
 
@@ -229,5 +232,51 @@ class discord_client(discord.Client):
             await tfm_client.sendCommand(self.tfm_bot, 'module stop')
             self.set_busy_status(False)
 
-            await msg.reply("Here you go! Triple-click to select the whole text.", file=discord.File(filename=f"{args[0]}.txt", fp=io.BytesIO(xml.encode())))
+            await msg.reply("Here you go! Triple-click to select the whole text.",
+                            file=discord.File(filename=f"{args[0]}.txt", fp=io.BytesIO(xml.encode())))
             return
+        elif helpers.check_command(cmd, author_access, 'rendermap'):
+            if self.busy:
+                await msg.reply("Bot is busy processing another request.")
+                return
+
+            if len(args) < 1:
+                await msg.reply("Specify a `@mapcode`.")
+                return
+
+            if args[0].find('@') == -1:
+                args[0] = '@' + args[0]
+
+            self.set_busy_status(True)
+            await tfm_client.request_xml(self.tfm_bot)
+            await tfm_client.loadLua(self.tfm_bot, env.get_xml.format(args[0]))
+            await asyncio.sleep(1.5)
+
+            xml = await tfm_client.get_xml(self.tfm_bot)
+
+            await tfm_client.sendCommand(self.tfm_bot, 'module stop')
+            self.set_busy_status(False)
+
+            image = await self.render_map(xml)
+
+            if image is None or len(image) < 2000:
+                await msg.reply("Failed to generate image...")
+                return
+
+            await msg.reply(file=discord.File(filename=f"{args[0]}.png", fp=io.BytesIO(image)))
+            return
+
+    async def render_map(self, xml):
+        try:
+            async with aiohttp.ClientSession(read_timeout=15.0) as session:
+                async with session.post(
+                        "https://miceditor-map-preview.herokuapp.com/",
+                        headers={"Content-Type": "application/json"},
+                        data=json.dumps({
+                            "xml": xml,
+                            "raw": True,
+                        }).encode()
+                ) as resp:
+                    return await resp.read()
+        except Exception:
+            return None

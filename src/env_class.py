@@ -135,7 +135,12 @@ class env:
         },
         'xml': {
             'name': command_prefix + "xml",
-            'desc': "Get the xml of a map.",
+            'desc': "Get the xml of a map. Needs a mapcode.",
+            'access': PUBLIC
+        },
+        'rendermap': {
+            'name': command_prefix + "rendermap",
+            'desc': "Renders a map. Needs a mapcode.",
             'access': PUBLIC
         }
     }
