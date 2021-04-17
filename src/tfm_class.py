@@ -29,8 +29,9 @@ class tfm_client(aiotfm.Client):
             if CCC == (28, 5):
                 packet.read16()  # because tig
                 msg = packet.readUTF()
-                if msg.find('$Modo') == -1 and msg.find('$Mapcrew') == -1:
+                if msg.find('<BV>') == -1:
                     self.dispatch('mod_command', "Nobody is online. :'(")
+                    self.dispatch('mapcrew_command', "Nobody is online. :'(")
                     return
                 else:
                     matches = re.findall(r"(\[[a-z]{2,3}]|[+_A-Za-z#0-9]{4,})+", msg)
@@ -61,7 +62,6 @@ class tfm_client(aiotfm.Client):
         print('Logging in ...')
         await self.login(username=env.tfm_user, password=env.tfm_pass,
                          encrypted=False, room=env.starting_room)
-        await self.discord_bot.get_channel(env.channels['debug']).send("Logging on Transformice.")
 
     async def on_ready(self):
         self.discord_bot.set_busy_status(False)

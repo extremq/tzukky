@@ -14,9 +14,9 @@ if __name__ == "__main__":
 
     # Establish communication between the bots
     discord_bot.set_tfm_bot(tfm_bot)
-    tfm_bot.set_discord_bot(discord_bot)
 
-    loop.create_task(discord_bot.tfm_bot.start(env.tfm_user, env.tfm_pass))
     loop.create_task(discord_bot.start(env.discord_token))
+    tfm_bot.set_discord_bot(discord_bot)
+    loop.create_task(tfm_bot.start(env.tfm_user, env.tfm_pass))
 
     loop.run_forever()

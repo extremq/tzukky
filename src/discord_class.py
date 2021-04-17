@@ -175,7 +175,7 @@ class discord_client(discord.Client):
                 return
 
             self.set_busy_status(True)
-            profile = await self.tfm_bot.get_profile(self=self.tfm_bot, username=args[0])
+            profile = await self.tfm_bot.get_profile(username=args[0])
             self.set_busy_status(False)
             if profile:
                 args[0] = helpers.capitalize_name(profile.username)
@@ -292,6 +292,7 @@ class discord_client(discord.Client):
     async def stop_dyno(self):
         self.set_busy_status(True)
         # The bot runs in a heroku dyno, we need to stop it.
+        await self.tfm_bot.close()
         await self.get_channel(env.channels['debug']).send("Closing application!")
         async with aiohttp.ClientSession() as session:
             await session.post(
