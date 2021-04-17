@@ -172,7 +172,8 @@ def generate_profile(profile):
     embed.add_field(name="Survivor", value="{} / {} / {} / {}".format(survivor['rounds'], survivor['killed'], survivor['shaman'], survivor['survivor']), inline=True)
     embed.add_field(name="Racing", value="{} / {} / {} / {}".format(racing['rounds'], racing['finished'], racing['first'], racing['podium']), inline=True)
     embed.add_field(name="Defilante", value="{} / {} / {}".format(defilante['rounds'], defilante['finished'], defilante['points']), inline=True)
-    embed.add_field(name="Look", value=profile['shop']['look'], inline=True)
+    if profile['shop']['look']:
+        embed.add_field(name="Look", value=profile['shop']['look'], inline=True)
     return embed
 
 
