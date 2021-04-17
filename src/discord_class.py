@@ -294,7 +294,7 @@ class discord_client(discord.Client):
         # The bot runs in a heroku dyno, we need to stop it.
         await self.get_channel(env.channels['debug']).send("Closing application!")
         async with aiohttp.ClientSession() as session:
-            await session.delete(
+            await session.post(
                 "https://api.heroku.com/apps/tzukky/dynos/bot/actions/stop",
                 headers={
                     "Content-Type": "application/json",
