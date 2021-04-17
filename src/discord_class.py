@@ -1,5 +1,3 @@
-import json
-
 import aiohttp
 import discord
 import asyncio
@@ -15,9 +13,10 @@ from env_class import env
 
 # Discord bot class
 class discord_client(discord.Client):
-    def __init__(self, tfm_bot, **options):
-        super().__init__(**options)
-        self.tfm_bot = tfm_bot
+    tfm_bot = None
+
+    def set_tfm_bot(self, bot):
+        self.tfm_bot = bot
 
     busy = False  # to be used with transformice commands such as xml, roomlist, etc.
 
@@ -25,10 +24,10 @@ class discord_client(discord.Client):
         self.busy = value
 
     async def on_ready(self):
-        await self.processRestarting()
         await self.change_presence(activity=discord.Game(name="Transformice (prefix ~)"))
         await self.get_channel(env.channels['debug']).send("Ready.")
-        print("Connected.")
+        print("Discord connected.")
+        await self.processRestarting()
 
     async def on_message(self, msg):
         author = msg.author
@@ -155,7 +154,7 @@ class discord_client(discord.Client):
             self.set_busy_status(False)
             return
         elif helpers.check_command(cmd, author_access, 'restart'):
-            await self.restart()
+            await self.restart_dyno()
             return
         """END DB COMMANDS"""
 
@@ -261,7 +260,7 @@ class discord_client(discord.Client):
             await tfm_client.sendCommand(self.tfm_bot, 'module stop')
             self.set_busy_status(False)
 
-            image = await self.render_map(xml)
+            image = await helpers.render_map(xml)
 
             if image is None or len(image) < 2000:
                 await msg.reply("Failed to generate image...")
@@ -270,22 +269,8 @@ class discord_client(discord.Client):
             await msg.reply(file=discord.File(filename=f"{args[0]}.png", fp=io.BytesIO(image)))
             return
 
-    async def render_map(self, xml):
-        try:
-            async with aiohttp.ClientSession(read_timeout=15.0) as session:
-                async with session.post(
-                        "https://miceditor-map-preview.herokuapp.com/",
-                        headers={"Content-Type": "application/json"},
-                        data=json.dumps({
-                            "xml": xml,
-                            "raw": True,
-                        }).encode()
-                ) as resp:
-                    return await resp.read()
-        except Exception:
-            return None
 
-    async def restart(self):
+    async def restart_dyno(self):
         self.set_busy_status(True)
         # The bot runs in a heroku dyno, we need to restart it.
         await self.get_channel(env.channels['debug']).send("Attempting to restart!")
@@ -299,18 +284,30 @@ class discord_client(discord.Client):
                 }
             )
 
+    async def stop_dyno(self):
+        self.set_busy_status(True)
+        # The bot runs in a heroku dyno, we need to stop it.
+        await self.get_channel(env.channels['debug']).send("Closing application!")
+        async with aiohttp.ClientSession() as session:
+            await session.delete(
+                "https://api.heroku.com/apps/tzukky/dynos/bot/actions/stop",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/vnd.heroku+json; version=3",
+                    "Authorization": "Bearer " + env.heroku_api
+                }
+            )
+
     async def processRestarting(self):
         while True:
             await asyncio.sleep(7200)
             self.set_busy_status(True)
             await tfm_client.restart(self=self.tfm_bot)
-            self.set_busy_status(False)
 
     async def on_connection_error(self, conn):
         if conn.name == "main":
             self.set_busy_status(True)
             await tfm_client.restart(self=self.tfm_bot)
-            self.set_busy_status(False)
         elif conn.name == "bulle":
             self.set_busy_status(True)
             await tfm_client.joinRoom(self=self.tfm_bot, room_name="1")

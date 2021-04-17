@@ -6,8 +6,12 @@ from env_class import env
 
 
 class tfm_client(aiotfm.Client):
+    discord_bot = None
     requested_xml = False
     xml = ""
+
+    def set_discord_bot(self, bot):
+        self.discord_bot = bot
 
     async def request_xml(self):
         xml = ""
@@ -57,9 +61,12 @@ class tfm_client(aiotfm.Client):
         print('Logging in ...')
         await self.login(username=env.tfm_user, password=env.tfm_pass,
                          encrypted=False, room=env.starting_room)
+        await self.discord_bot.get_channel(env.channels['debug']).send("Logging on Transformice.")
 
     async def on_ready(self):
+        self.discord_bot.set_busy_status(False)
         print(f'Connected to the community platform as {env.tfm_user}')
+        await self.discord_bot.get_channel(env.channels['debug']).send(f'Connected to the community platform as {env.tfm_user}')
 
     async def get_profile(self, username, timeout=1):
 

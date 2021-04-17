@@ -1,3 +1,4 @@
+import json
 import math
 
 import aiohttp
@@ -230,3 +231,19 @@ def formula(n):
 
 def check_command(cmd, author_access, name):
     return cmd == env.commands[name]['name'] and env.commands[name]['access'] & author_access
+
+
+async def render_map(xml):
+    try:
+        async with aiohttp.ClientSession(read_timeout=15.0) as session:
+            async with session.post(
+                    "https://miceditor-map-preview.herokuapp.com/",
+                    headers={"Content-Type": "application/json"},
+                    data=json.dumps({
+                        "xml": xml,
+                        "raw": True,
+                    }).encode()
+            ) as resp:
+                return await resp.read()
+    except Exception:
+        return None
