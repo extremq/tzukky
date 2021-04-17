@@ -156,6 +156,9 @@ class discord_client(discord.Client):
         elif helpers.check_command(cmd, author_access, 'restart'):
             await self.restart_dyno()
             return
+        elif helpers.check_command(cmd, author_access, 'restarttfm'):
+            await self.tfm_bot.restart()
+            return
         """END DB COMMANDS"""
 
         """BEGIN TFM-BOT COMMANDS"""
@@ -169,7 +172,7 @@ class discord_client(discord.Client):
                 return
 
             self.set_busy_status(True)
-            profile = await tfm_client.get_profile(self=self.tfm_bot, username=args[0])
+            profile = await self.tfm_bot.get_profile(self=self.tfm_bot, username=args[0])
             self.set_busy_status(False)
             if profile:
                 args[0] = helpers.capitalize_name(profile.username)
@@ -194,7 +197,7 @@ class discord_client(discord.Client):
                 return
 
             self.set_busy_status(True)
-            roomlist = await tfm_client.retrieve_roomlist(self.tfm_bot, env.gamemodes_values[args[0].upper()], args[1])
+            roomlist = await self.tfm_bot.retrieve_roomlist(env.gamemodes_values[args[0].upper()], args[1])
             self.set_busy_status(False)
 
             await msg.reply(embed=helpers.generate_roomlist(roomlist, args[0], args[1]))
@@ -204,7 +207,7 @@ class discord_client(discord.Client):
                 await msg.reply("Bot is busy processing another request.")
                 return
 
-            result = await tfm_client.retrieve_mods(self.tfm_bot)
+            result = await self.tfm_bot.retrieve_mods()
             await msg.reply(embed=helpers.generate_mod_list(result))
             return
         elif helpers.check_command(cmd, author_access, 'mapcrew'):
@@ -212,7 +215,7 @@ class discord_client(discord.Client):
                 await msg.reply("Bot is busy processing another request.")
                 return
 
-            result = await tfm_client.retrieve_mapcrew(self.tfm_bot)
+            result = await self.tfm_bot.retrieve_mapcrew()
             await msg.reply(embed=helpers.generate_mapcrew_list(result))
             return
         elif helpers.check_command(cmd, author_access, 'xml'):
@@ -228,11 +231,11 @@ class discord_client(discord.Client):
                 args[0] = '@' + args[0]
 
             self.set_busy_status(True)
-            await tfm_client.request_xml(self.tfm_bot)
-            await tfm_client.loadLua(self.tfm_bot, env.get_xml.format(args[0]))
+            await self.tfm_bot.request_xml()
+            await self.tfm_bot.loadLua(env.get_xml.format(args[0]))
             await asyncio.sleep(1.5)
-            xml = await tfm_client.get_xml(self.tfm_bot)
-            await tfm_client.sendCommand(self.tfm_bot, 'module stop')
+            xml = await self.tfm_bot.get_xml()
+            await self.tfm_bot.sendCommand('module stop')
             self.set_busy_status(False)
 
             await msg.reply("Here you go! Triple-click to select the whole text.",
@@ -251,13 +254,13 @@ class discord_client(discord.Client):
                 args[0] = '@' + args[0]
 
             self.set_busy_status(True)
-            await tfm_client.request_xml(self.tfm_bot)
-            await tfm_client.loadLua(self.tfm_bot, env.get_xml.format(args[0]))
+            await self.tfm_bot.request_xml()
+            await self.tfm_bot.loadLua(env.get_xml.format(args[0]))
             await asyncio.sleep(1.5)
 
-            xml = await tfm_client.get_xml(self.tfm_bot)
+            xml = await self.tfm_bot.get_xml()
 
-            await tfm_client.sendCommand(self.tfm_bot, 'module stop')
+            await self.tfm_bot.sendCommand('module stop')
             self.set_busy_status(False)
 
             image = await helpers.render_map(xml)
@@ -268,7 +271,6 @@ class discord_client(discord.Client):
 
             await msg.reply(file=discord.File(filename=f"{args[0]}.png", fp=io.BytesIO(image)))
             return
-
 
     async def restart_dyno(self):
         self.set_busy_status(True)
@@ -302,15 +304,15 @@ class discord_client(discord.Client):
         while True:
             await asyncio.sleep(7200)
             self.set_busy_status(True)
-            await tfm_client.restart(self=self.tfm_bot)
+            await self.tfm_bot.restart()
 
     async def on_connection_error(self, conn):
         if conn.name == "main":
             self.set_busy_status(True)
-            await tfm_client.restart(self=self.tfm_bot)
+            await self.tfm_bot.restart()
         elif conn.name == "bulle":
             self.set_busy_status(True)
-            await tfm_client.joinRoom(self=self.tfm_bot, room_name="1")
+            await self.tfm_bot.joinRoom(room_name="1")
             await asyncio.sleep(3.0)
-            await tfm_client.joinRoom(self=self.tfm_bot, room_name="@#shobi")
+            await self.tfm_bot.joinRoom(room_name="@#shobi")
             self.set_busy_status(False)

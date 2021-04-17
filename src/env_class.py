@@ -109,6 +109,11 @@ class env:
             'desc': "Restarts the dyno.",
             'access': ADMIN
         },
+        'restarttfm': {
+            'name': command_prefix + "restarttfm",
+            'desc': "Restarts the tfm client.",
+            'access': ADMIN
+        },
         'isonline': {
             'name': command_prefix + "isonline",
             'desc': "Check if an user is online. Accepts `name` as parameter.",
@@ -143,6 +148,11 @@ class env:
             'name': command_prefix + "rendermap",
             'desc': "Renders a map. Needs a mapcode.",
             'access': PUBLIC
+        },
+        'stop': {
+            'name': command_prefix + "stop",
+            'desc': "Stops the app.",
+            'access': ADMIN
         }
     }
 
