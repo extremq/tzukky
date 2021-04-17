@@ -303,7 +303,7 @@ class discord_client(discord.Client):
 
     async def processRestarting(self):
         while True:
-            await asyncio.sleep(60)
+            await asyncio.sleep(7200)
             await self.restart_dyno()
 
     async def on_connection_error(self, conn):
