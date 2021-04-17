@@ -159,6 +159,9 @@ class discord_client(discord.Client):
         elif helpers.check_command(cmd, author_access, 'restarttfm'):
             await self.tfm_bot.restart()
             return
+        elif helpers.check_command(cmd, author_access, 'stop'):
+            await self.stop_dyno()
+            return
         """END DB COMMANDS"""
 
         """BEGIN TFM-BOT COMMANDS"""
