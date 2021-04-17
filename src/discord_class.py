@@ -276,7 +276,6 @@ class discord_client(discord.Client):
             return
 
     async def restart_dyno(self):
-        self.set_busy_status(True)
         # The bot runs in a heroku dyno, we need to restart it.
         await self.get_channel(env.channels['debug']).send("Attempting to restart!")
         async with aiohttp.ClientSession() as session:
@@ -290,9 +289,7 @@ class discord_client(discord.Client):
             )
 
     async def stop_dyno(self):
-        self.set_busy_status(True)
         # The bot runs in a heroku dyno, we need to stop it.
-        await self.tfm_bot.close()
         await self.get_channel(env.channels['debug']).send("Closing application!")
         async with aiohttp.ClientSession() as session:
             await session.post(
@@ -306,17 +303,13 @@ class discord_client(discord.Client):
 
     async def processRestarting(self):
         while True:
-            await asyncio.sleep(7200)
-            self.set_busy_status(True)
-            await self.tfm_bot.restart()
+            await asyncio.sleep(60)
+            await self.restart_dyno()
 
     async def on_connection_error(self, conn):
         if conn.name == "main":
-            self.set_busy_status(True)
             await self.tfm_bot.restart()
         elif conn.name == "bulle":
-            self.set_busy_status(True)
             await self.tfm_bot.joinRoom(room_name="1")
             await asyncio.sleep(3.0)
             await self.tfm_bot.joinRoom(room_name="@#shobi")
-            self.set_busy_status(False)
