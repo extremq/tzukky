@@ -136,11 +136,15 @@ class discord_client(discord.Client):
 
             await msg.reply(embed=helpers.generate_search_result(search_result, "profile"))
         elif helpers.check_command(cmd, author_access, 'searchtribe'):
+            param = None
             if len(args) < 1:
                 await msg.reply("Provide a name.")
-                return
+            elif len(args) > 1:
+                param = " ".join(args)
+            else:
+                param = args[0]
 
-            search_result = await helpers.request_tribe_search(args[0])
+            search_result = await helpers.request_tribe_search(param)
             if search_result is None:
                 await msg.reply("Failed searching.")
                 return
