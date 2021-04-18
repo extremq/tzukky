@@ -9,7 +9,7 @@ class env:
     tfm_pass = os.getenv('tfm_pass')
     tfm_id = 11760142
     tfm_token = os.getenv('tfm_token')
-    heroku_api = os.getenv('heroku_api')
+    heroku_api = os.getenv('heroku_api2')
     starting_room = "@#shobi"
     get_xml = """xml=''function eventNewGame()xml=tfm.get.room.xmlMapInfo.xml;printXML()end;function printXML()local a=math.ceil(xml:len()/2000)for b=0,math.ceil(xml:len()/2000)-1 do print(xml:sub(xml:len()*b/a+1,xml:len()*(b+1)/a))end end;tfm.exec.newGame("{}")"""
 
