@@ -1,8 +1,12 @@
 import os
+import helpers
 
 from aiotfm import enums
 
+
 class env:
+    titles = helpers.request_titles()
+
     discord_token = os.getenv('discord_token')
     cfm_site = os.getenv('cfm_site')
     tfm_user = "Extremq2#0000"
@@ -159,4 +163,3 @@ class env:
     channels = {
         'debug': 832310385741660180
     }
-
