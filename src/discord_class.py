@@ -15,8 +15,19 @@ from env_class import env
 class discord_client(discord.Client):
     tfm_bot = None
 
+    titles = None
+
     def set_tfm_bot(self, bot):
         self.tfm_bot = bot
+
+    async def request_titles(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(env.cfm_site + "translation/en?start=T_") as resp:
+                result = await resp.json()
+        if resp.status == 200:
+            return result
+        else:
+            return
 
     busy = False  # to be used with transformice commands such as xml, roomlist, etc.
 
@@ -92,7 +103,11 @@ class discord_client(discord.Client):
                 await msg.reply("Provide a name or an id.")
                 return
 
+            if not self.titles:
+                self.titles = await self.request_titles()
+
             profile = await helpers.request_profile(args[0])
+            profile['title'] = self.titles[f"T_{profile['title']}"]
             if profile:
                 await msg.reply(embed=helpers.generate_profile(profile))
             else:

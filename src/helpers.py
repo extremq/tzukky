@@ -76,16 +76,6 @@ async def request_tribe_search(param):
         return
 
 
-async def request_titles():
-    async with aiohttp.ClientSession() as session:
-        async with session.get(env.cfm_site + "translation/en?start=T_") as resp:
-            result = await resp.json()
-    if resp.status == 200:
-        return result
-    else:
-        return
-
-
 def generate_search_result(search_result, _type):
     if _type == "profile":
         url = "https://atelier801.com/profile?pr={}"
@@ -167,7 +157,7 @@ def generate_profile(profile):
         embed.add_field(name="Tribe", value="None.", inline=True)
     embed.add_field(name="Saves", value="{} / {} / {}".format(sham['saves_normal'], sham['saves_hard'],
                                                               sham['saves_divine']), inline=True)
-    embed.add_field(name="Title", value=str(env.titles[f'T_{profile["title"]}']), inline=True)
+    embed.add_field(name="Title", value=f'`{profile["title"]}`', inline=True)
     embed.add_field(name="Rounds", value=str(normal['rounds']), inline=True)
     embed.add_field(name="Experience", value=str(sham['experience']), inline=True)
     embed.add_field(name="Level", value=str(level(sham['experience'])), inline=True)

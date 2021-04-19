@@ -1,12 +1,11 @@
 import os
-import helpers
 
+import aiohttp
 from aiotfm import enums
 
 
 class env:
-    titles = helpers.request_titles()
-
+    titles = None
     discord_token = os.getenv('discord_token')
     cfm_site = os.getenv('cfm_site')
     tfm_user = "Extremq2#0000"

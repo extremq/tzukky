@@ -9,7 +9,7 @@ from tfm_class import tfm_client
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
-    discord_bot = discord_client(loop=loop)
+    discord_bot = discord_client()
     tfm_bot = tfm_client(community=aiotfm.enums.Community.en, bot_role=True)
 
     # Establish communication between the bots
